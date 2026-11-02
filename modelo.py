@@ -247,31 +247,44 @@ def cargar_dataset():
     return df, datos
 
 
+
 # ============================================
-# ENTRENAMIENTO BAYESIANO
+# ENTRENAMIENTO BAYESIANO CORREGIDO
 # ============================================
 
 def entrenar_modelo(datos_entrenamiento):
 
+    # 1. Definir las relaciones de la red
     relaciones = [
         ("Riesgo", variable)
         for variable in VARIABLES
     ]
 
+    # 2. Construir la red bayesiana discreta
     red = DiscreteBayesianNetwork(relaciones)
 
-    red.fit(
-        datos_entrenamiento,
-        estimator=BayesianEstimator,
-        prior_type="K2",
+    # 3. Inicializar el estimador bayesiano
+    estimador = BayesianEstimator(
+        model=red,
+        data=datos_entrenamiento,
         state_names=ESTADOS
     )
 
+    # 4. Calcular las probabilidades con K2
+    probabilidades = estimador.get_parameters(
+        prior_type="K2"
+    )
+
+    # 5. Incorporar las probabilidades a la red
+    red.add_cpds(*probabilidades)
+
+    # 6. Verificar la validez del modelo
     if not red.check_model():
         raise ValueError(
             "La red bayesiana no es valida."
         )
 
+    # 7. Devolver la red entrenada
     return red
 
 
